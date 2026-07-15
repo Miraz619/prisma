@@ -5,7 +5,11 @@ import { catchAsync } from "../../utils/catchAsync";
 import { Prisma__UserClient } from './../../../generated/prisma/models/User';
 import { sendRespnse } from "../../utils/sendResponse";
 
+import jwt, { JwtPayload } from "jsonwebtoken";
 
+
+import config from "../../config";
+import { jwtUtils } from "../../utils/jw";
 // const registerUser = async (req: Request, res: Response) => {
 //   try {
      
@@ -67,6 +71,25 @@ sendRespnse(res,{
 })
 
 })
+
+const getMyProfile=catchAsync(async(req:Request,res:Response, next: NextFunction )=>{
+
+// const {accessToken}=req.cookies;
+//       const verifiedToken=jwtUtils.verifyToken(accessToken,config.jwt_access_secret) as JwtPayload;
+
+  const profile=await UserService.getMyProfileFromDB(req.user?.id as string);
+
+
+
+  sendRespnse(res,{
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "user profile fetched successfully",
+    data: {profile}
+  })
+
+})
 export const UserController = {
   registerUser,
+  getMyProfile
 };
