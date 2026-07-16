@@ -7,6 +7,7 @@ import { UserController } from "./user.controller";
 import { jwtUtils } from "../../utils/jw";
 import { JwtPayload } from "jsonwebtoken";
 import { Role } from "../../../generated/prisma/enums";
+import { catchAsync } from "../../utils/catchAsync";
 
 const router = express.Router();
 
@@ -27,34 +28,51 @@ declare global{
     }
 
 }
-router.post("/register", UserController.registerUser)
-router.get("/me", (req:Request, res: Response, next:NextFunction)=>{
-    
-      const {accessToken}=req.cookies;
-      const verifiedToken=jwtUtils.verifyToken(accessToken,config.jwt_access_secret) as JwtPayload;
-       
+router.post("/register", UserController.registerUser);
 
-      const {email,name,id,role}=verifiedToken;
-      const requiredRoles=[Role.ADMIN, Role.AUTHOR,Role.USER];
-     if(!requiredRoles.includes(role)){
+const auth=(...requiredRoles: Role[])=>{
+    return catchAsync(async(req: Request, res: Response, next: NextFunction)=>{
+        
+        const token= req.cookies.accessToken 
+                //    || req.headers.authorization?.startsWith('Bearer')? req.headers.authorization?.split(" ")[1]
+                //    : req.headers.authorization;
 
-        return res.status(httpStatus.FORBIDDEN).json({
+       if(!token){
+        throw new Error("you are not logged in, please log in");
+       }
 
-             success: false,
-      statusCode: httpStatus.FORBIDDEN,
-      message: "failed to register user",
-      error: "forbidden, you dont have permission to access this resource"
-        })
+        const verifiedToken=jwtUtils.verifyToken(token,config.jwt_access_secret) as JwtPayload;
+        const {email,name,id,role}=verifiedToken;
+
+         if(requiredRoles.length && !requiredRoles.includes(role)){
+
+          throw new Error("forbidden, you dont have permission")
      }
-      
-     req.user={
+     const user = await prisma.user.findUniqueOrThrow({
+        where: {
+            id,
+            email,
+            name,
+            role
+        }
+     })
+
+     if(user.activeStatus==="Blocked"){
+        throw new Error("Your account has been blocked, please contact support")
+     }
+
+      req.user={
         email,
         name,
         id,
         role
      }
+  next();
+    })
+}
 
-    next();
-}, UserController.getMyProfile)
+router.get("/me", 
+    auth(Role.USER),
+ UserController.getMyProfile)
 
 export const UserRoutes = router;
