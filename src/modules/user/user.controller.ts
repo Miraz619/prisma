@@ -74,6 +74,8 @@ sendRespnse(res,{
 
 const getMyProfile=catchAsync(async(req:Request,res:Response, next: NextFunction )=>{
 
+
+
 // const {accessToken}=req.cookies;
 //       const verifiedToken=jwtUtils.verifyToken(accessToken,config.jwt_access_secret) as JwtPayload;
 
@@ -89,7 +91,25 @@ const getMyProfile=catchAsync(async(req:Request,res:Response, next: NextFunction
   })
 
 })
+
+const updateMyProfile=catchAsync(async(req:Request, res: Response, next: NextFunction)=>{
+  
+  const userId=req.user?.id as string;
+  const payload=req.body;
+
+  const updatedProfile= await UserService.updateMyProfile(userId,payload);
+
+  sendRespnse(res,{
+    success:true,
+    statusCode:httpStatus.OK,
+    message: "User profile Updated Successfully",
+    data: {
+      updatedProfile
+    }
+  })
+})
 export const UserController = {
   registerUser,
-  getMyProfile
+  getMyProfile,
+  updateMyProfile
 };

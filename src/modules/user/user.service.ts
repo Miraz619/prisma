@@ -3,6 +3,7 @@
 import bcrypt from "bcrypt";
 import config from "../../config";
 import { prisma } from "../../lib/prisma";
+import { JwtPayload } from 'jsonwebtoken';
 
 type RegisterUserPayload = {
   name: string;
@@ -74,7 +75,43 @@ const getMyProfileFromDB=async(userId:string)=>{
   return user;
 }
 
+const updateMyProfile=async(userId:string, payload:any)=>{
+  
+      const{name,email,profilePhoto,bio}=payload;
+
+      const updatedUser=await prisma.user.update({
+
+        where: {id: userId},
+        data:{
+
+           name,
+           email,
+           profile: {
+
+            update: {
+              profilePhoto,
+              bio
+            }
+           }
+
+        },
+
+        omit: {
+          password: true
+        },
+        include:{
+          profile: true
+        }
+      })
+
+
+      return updatedUser;
+
+}
+
+
 export const UserService = {
   registerUser,
-  getMyProfileFromDB
+  getMyProfileFromDB,
+  updateMyProfile
 };
