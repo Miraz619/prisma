@@ -4,13 +4,9 @@ import bcrypt from "bcrypt";
 import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { JwtPayload } from 'jsonwebtoken';
+import { RegisterUserPayload } from "./user.interface";
 
-type RegisterUserPayload = {
-  name: string;
-  email: string;
-  password: string;
-  profilePhoto?: string;
-};
+
 
 const registerUser = async (payload: RegisterUserPayload) => {
   const { name, email, password, profilePhoto } = payload;

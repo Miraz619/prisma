@@ -54,10 +54,10 @@ export const auth = (...requiredRoles: Role[]) => {
     }
 
     req.user = {
-      email,
-      name,
+      email: user.email,
+      name: user.name,
       id,
-      role,
+      role: user.role
     };
     next();
   });
