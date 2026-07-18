@@ -45,7 +45,6 @@ export const auth = (...requiredRoles: Role[]) => {
         id
         
         
-        
       },
     });
 

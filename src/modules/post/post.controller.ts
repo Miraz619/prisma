@@ -88,10 +88,46 @@ const updatePost = catchAsync(
     });
   }
 );
+
+const deletePost=catchAsync(async(req:Request,res: Response, next:NextFunction)=>{
+
+      const postId=req.params.postId;
+      const authorId=req.user?.id;
+      const isAdmin=req.user?.role===Role.ADMIN;
+
+      const result=await postService.deletePost(
+        postId as string,
+        authorId as string,
+        isAdmin
+      )
+   sendRespnse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Post deleted successfully",
+      data: result,
+    });
+     
+
+})
+
+const getPostsStats = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await postService.getPostsStats();
+
+    sendRespnse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Post statistics retrieved successfully",
+      data: result,
+    });
+  }
+);
 export const postController = {
   createPost,
   getAllPosts,
   getPostById,
   getMyPosts,
-  updatePost
+  updatePost,
+  deletePost,
+  getPostsStats
 };
