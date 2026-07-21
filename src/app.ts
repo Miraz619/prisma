@@ -6,6 +6,7 @@ import httpStatus from "http-status";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcrypt";
 import router from "./routes";
+import { notFound } from "./middlewares/notfound";
 const app: Application = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,5 +23,6 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api", router)
 
+app.use(notFound);
 
 export default app;
