@@ -25,17 +25,48 @@ const createPost = catchAsync(
   }
 );
 
+// const getAllPosts = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const result = await postService.getAllPosts();
+
+//     sendRespnse(res, {
+//       success: true,
+//       statusCode: httpStatus.OK,
+//       message: "Posts retrieved successfully",
+//       data: result,
+//     });
+//   }
+// );
+// const getAllPosts = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const query = req.query;
+
+//     const result = await postService.getAllPosts(query);
+
+//     sendRespnse(res, {
+//       success: true,
+//       statusCode: httpStatus.OK,
+//       message: "Posts retrieved successfully",
+//       data: result.data,
+//       meta: result.meta,
+//     });
+//   },
+// );
+
 const getAllPosts = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const result = await postService.getAllPosts();
+    const query = req.query;
+
+    const result = await postService.getAllPosts(query);
 
     sendRespnse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: "Posts retrieved successfully",
-      data: result,
+      data: result.data,
+      meta: result.meta,
     });
-  }
+  },
 );
 
 const getPostById = catchAsync(

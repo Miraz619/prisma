@@ -20,3 +20,19 @@ export interface IUpdatePostPayload {
   status?: Poststatus;
   tags?: string[];
 }
+
+
+
+export interface IPostQuery {
+  searchTerm?: string;
+  title?: string;
+  content?: string;
+  authorId?: string;
+  status?: Poststatus;
+
+  page?: string;
+  limit?: string;
+
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
