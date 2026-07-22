@@ -60,3 +60,51 @@ export const handleCheckoutCompleted = async (
     },
   });
 };
+
+
+export const handleChangeSubscription = async (
+  payload: Stripe.Subscription,
+) => {
+  const stripeSubscriptionId = payload.id;
+
+  const status =
+    payload.status === "active" ||
+    payload.status === "trialing"
+      ? SubscriptionStatus.ACTIVE
+      : payload.status === "canceled"
+        ? SubscriptionStatus.CANCELED
+        : SubscriptionStatus.EXPIRED;
+
+  const currentPeriodEndInSeconds =
+    payload.items.data[0]?.current_period_end;
+
+  if (!currentPeriodEndInSeconds) {
+    return;
+  }
+
+  const currentPeriodEnd = new Date(
+    currentPeriodEndInSeconds * 1000,
+  );
+
+  const subscription =
+    await prisma.subscription.findUnique({
+      where: {
+        stripeSubscriptionId,
+      },
+    });
+
+  if (!subscription) {
+    return;
+  }
+
+  await prisma.subscription.update({
+    where: {
+      stripeSubscriptionId,
+    },
+
+    data: {
+      status,
+      currentPeriodEnd,
+    },
+  });
+};
