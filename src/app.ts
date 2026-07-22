@@ -2,12 +2,20 @@ import cookieParser from "cookie-parser";
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import config from "./config";
-import httpStatus from "http-status";
-import { prisma } from "./lib/prisma";
-import bcrypt from "bcrypt";
+
+
+
 import router from "./routes";
-import { notFound } from "./middlewares/notfound";
+
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import { notFound } from "./middlewares/notFound";
 const app: Application = express();
+
+app.use(
+  "/api/subscription/webhook",
+  express.raw({ type: "application/json" }),
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -24,5 +32,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api", router)
 
 app.use(notFound);
+app.use(globalErrorHandler);
 
 export default app;
