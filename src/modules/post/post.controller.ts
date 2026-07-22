@@ -153,6 +153,22 @@ const getPostsStats = catchAsync(
     });
   }
 );
+
+const getPremiumPosts = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await postService.getPremiumPosts(
+      req.query
+    );
+
+    sendRespnse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Premium posts retrieved successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  },
+);
 export const postController = {
   createPost,
   getAllPosts,
@@ -160,5 +176,6 @@ export const postController = {
   getMyPosts,
   updatePost,
   deletePost,
-  getPostsStats
+  getPostsStats,
+  getPremiumPosts
 };

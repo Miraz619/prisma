@@ -115,6 +115,26 @@ const moderateComment = async (
 
   return result;
 };
+
+// const getCommentsByPostId = async (postId: string) => {
+//   const result = await prisma.comment.findMany({
+//     where: {
+//       postId,
+//     },
+//     orderBy: {
+//       createdAt: "desc",
+//     },
+//     include: {
+//       author: {
+//         omit: {
+//           password: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return result;
+// };
 export const commentService = {
   createComment,
   getCommentsByAuthorId,

@@ -3,6 +3,7 @@ import { CommentStatus, Poststatus } from "../../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 import {
   ICreatePostPayload,
+  IPostQuery,
   IUpdatePostPayload,
 } from "./post.interface";
 import { PostWhereInput } from "../../../generated/prisma/models";
@@ -11,6 +12,24 @@ import { PostWhereInput } from "../../../generated/prisma/models";
 
 const createPost= async(payload:ICreatePostPayload, userId:string)=>{
 
+
+const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+    include: {
+      subscription: true,
+    },
+  });
+
+  if (
+    payload.isPremium &&
+    user.subscription?.status !== "ACTIVE"
+  ) {
+    throw new Error(
+      "You are not a premium user. So you cannot create premium content",
+    );
+  }
 
     const result=await prisma.post.create({
 
@@ -149,103 +168,105 @@ return result
 //   };
 // };
 
-const getAllPosts = async (query: IPostQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
+  const getAllPosts = async (query: IPostQuery) => {
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
 
-  const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
-  const sortBy = query.sortBy
-    ? query.sortBy
-    : "createdAt";
+    const sortBy = query.sortBy
+      ? query.sortBy
+      : "createdAt";
 
-  const sortOrder = query.sortOrder
-    ? query.sortOrder
-    : "desc";
+    const sortOrder = query.sortOrder
+      ? query.sortOrder
+      : "desc";
 
-  const andConditions: PostWhereInput[] = [];
+    const andConditions: PostWhereInput[] = [];
 
-  if (query.searchTerm) {
-    andConditions.push({
-      OR: [
-        {
-          title: {
-            contains: query.searchTerm,
-            mode: "insensitive",
+    if (query.searchTerm) {
+      andConditions.push({
+        OR: [
+          {
+            title: {
+              contains: query.searchTerm,
+              mode: "insensitive",
+            },
           },
-        },
-        {
-          content: {
-            contains: query.searchTerm,
-            mode: "insensitive",
+          {
+            content: {
+              contains: query.searchTerm,
+              mode: "insensitive",
+            },
           },
-        },
-      ],
-    });
-  }
+        ],
+      });
+    }
 
-  if (query.title) {
-    andConditions.push({
-      title: query.title,
-    });
-  }
+    if (query.title) {
+      andConditions.push({
+        title: query.title,
+      });
+    }
 
-  if (query.content) {
-    andConditions.push({
-      content: query.content,
-    });
-  }
+    if (query.content) {
+      andConditions.push({
+        content: query.content,
+      });
+    }
 
-  if (query.authorId) {
-    andConditions.push({
-      authorId: query.authorId,
-    });
-  }
+    if (query.authorId) {
+      andConditions.push({
+        authorId: query.authorId,
+      });
+    }
 
-  if (query.status) {
-    andConditions.push({
-      status: query.status,
-    });
-  }
-
-  const posts = await prisma.post.findMany({
-    where: {
-      AND: andConditions,
-    },
-
-    take: limit,
-    skip,
-
-    orderBy: {
-      [sortBy]: sortOrder,
-    },
-
-    include: {
-      author: {
-        omit: {
-          password: true,
-        },
+    if (query.status) {
+      andConditions.push({
+        status: query.status,
+      });
+    }
+  andConditions.push({
+    isPremium: false,
+  });
+    const posts = await prisma.post.findMany({
+      where: {
+        AND: andConditions,
       },
-      comments: true,
-    },
-  });
 
-  const totalPostCount = await prisma.post.count({
-    where: {
-      AND: andConditions,
-    },
-  });
+      take: limit,
+      skip,
 
-  return {
-    data: posts,
-    meta: {
-      page,
-      limit,
-      total: totalPostCount,
-      totalPages: Math.ceil(totalPostCount / limit),
-    },
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+
+      include: {
+        author: {
+          omit: {
+            password: true,
+          },
+        },
+        comments: true,
+      },
+    });
+
+    const totalPostCount = await prisma.post.count({
+      where: {
+        AND: andConditions,
+      },
+    });
+
+    return {
+      data: posts,
+      meta: {
+        page,
+        limit,
+        total: totalPostCount,
+        totalPages: Math.ceil(totalPostCount / limit),
+      },
+    };
   };
-};
 const getPostById=async(postId: string)=>{
 
 
@@ -256,6 +277,7 @@ const transactionResult =await prisma.$transaction(
       
       where: {
         id:postId,
+        isPremium: false,
       },
       data: {
         views:{
@@ -444,6 +466,108 @@ const getPostsStats = async () => {
 
   return transactionResult;
 };
+
+const getPremiumPosts = async (query: IPostQuery) => {
+  const limit = query.limit ? Number(query.limit) : 10;
+  const page = query.page ? Number(query.page) : 1;
+
+  const skip = (page - 1) * limit;
+
+  const sortBy = query.sortBy
+    ? query.sortBy
+    : "createdAt";
+
+  const sortOrder = query.sortOrder
+    ? query.sortOrder
+    : "desc";
+
+  const andConditions: PostWhereInput[] = [];
+
+  if (query.searchTerm) {
+    andConditions.push({
+      OR: [
+        {
+          title: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: query.searchTerm,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  if (query.title) {
+    andConditions.push({
+      title: query.title,
+    });
+  }
+
+  if (query.content) {
+    andConditions.push({
+      content: query.content,
+    });
+  }
+
+  if (query.authorId) {
+    andConditions.push({
+      authorId: query.authorId,
+    });
+  }
+
+  if (query.status) {
+    andConditions.push({
+      status: query.status,
+    });
+  }
+
+  andConditions.push({
+    isPremium: true,
+  });
+
+  const posts = await prisma.post.findMany({
+    where: {
+      AND: andConditions,
+    },
+
+    take: limit,
+    skip,
+
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+
+    include: {
+      author: {
+        omit: {
+          password: true,
+        },
+      },
+      comments: true,
+    },
+  });
+
+  const totalPostCount = await prisma.post.count({
+    where: {
+      AND: andConditions,
+    },
+  });
+
+  return {
+    data: posts,
+    meta: {
+      page,
+      limit,
+      total: totalPostCount,
+      totalPages: Math.ceil(totalPostCount / limit),
+    },
+  };
+};
 export const postService={
     createPost,
     getAllPosts,
@@ -451,5 +575,6 @@ export const postService={
     getMyPosts,
     updatePost,
     deletePost,
-    getPostsStats
+    getPostsStats,
+    getPremiumPosts
 }
